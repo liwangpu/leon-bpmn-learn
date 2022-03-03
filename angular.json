@@ -53,7 +53,12 @@
             "aot": true,
             "assets": [
               "src/favicon.ico",
-              "src/assets"
+              "src/assets",
+              {
+                "glob": "**/*",
+                "input": "./node_modules/bpmn-js/dist/assets/",
+                "output": "/assets/bpmn-js"
+              }
             ],
             "styles": [
               "src/styles.scss"

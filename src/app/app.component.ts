@@ -1,4 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
+import Modeler from 'bpmn-js/lib/Modeler';
+import * as bjs from 'bpmn-js';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'app-root',
@@ -8,11 +11,15 @@ import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 })
 export class AppComponent implements OnInit {
 
-    public constructor() {
+    public constructor(
+        private http: HttpClient
+    ) {
 
     }
 
-    public ngOnInit(): void {
-
+    public async ngOnInit(): Promise<void> {
+        const bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
+        const modeler = new Modeler({ container: '#container' });
+        await modeler.importXML(bpmnXML);
     }
 }
