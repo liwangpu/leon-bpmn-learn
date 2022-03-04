@@ -1,12 +1,14 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import Modeler from 'bpmn-js/lib/Modeler';
 import { HttpClient } from '@angular/common/http';
+import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
+import { Descriptor as MirrorDescriptor } from './mirror.descriptor';
 
 @Component({
-  selector: 'app-bpmnjs',
-  templateUrl: './bpmnjs.component.html',
-  styleUrls: ['./bpmnjs.component.scss'],
-  changeDetection: ChangeDetectionStrategy.OnPush
+    selector: 'app-bpmnjs',
+    templateUrl: './bpmnjs.component.html',
+    styleUrls: ['./bpmnjs.component.scss'],
+    changeDetection: ChangeDetectionStrategy.OnPush
 })
 export class BpmnjsComponent implements OnInit {
 
@@ -43,26 +45,35 @@ export class BpmnjsComponent implements OnInit {
 
     public async ngOnInit(): Promise<void> {
         const bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
-        this.modeler = new Modeler({ container: '#container' });
+        this.modeler = new Modeler({
+            container: '#container',
+            moddleExtensions: {
+                camunda: MirrorDescriptor,
+                // mirror: MirrorDescriptor
+            }
+        });
         await this.modeler.importXML(bpmnXML);
 
         this.modeler.on('element.click', (e: any) => {
-            console.log('click:', e);
-            console.log('click e:', e.element);
+            // console.log('click:', e);
+            console.log('element:', e.element);
+            const shape = this.getElementRegistry().get('StartEvent_1');
+            console.log('shape:', shape);
         });
     }
 
     public async translate(): Promise<void> {
         const { xml } = await this.modeler.saveXML({ format: true });
         console.log('xml:', xml);
-
     }
 
-    public async test(): Promise<void> {
+    public async changeNode(): Promise<void> {
         // let dfs = this.modeler.getDefinitions();
         const els = this.getElementRegistry().getAll();
-        const el = this.getElementRegistry().get('StartEvent_1');
-        console.log(1, el);
+        const shape = this.getElementRegistry().get('StartEvent_1');
+        console.log('shape:', shape);
+        console.log('shap type', shape.type);
+
         // console.log(2, el);
         // console.log(3,this.getElementRegistry());
         const moddle = this.getModdle();
@@ -73,11 +84,27 @@ export class BpmnjsComponent implements OnInit {
         // // 自定义属性2
         // const attrTwo = moddle.create("se:AttrTwo", { value: "testAttrTwo" })
         // // 原生属性Properties
-        // const props = moddle.create("camunda:Properties", { values: [] });
+        const props = moddle.create("camunda:Properties", { values: [] });
         // // 原生属性Properties的子属性
         // const propItem = moddle.create("camunda:Property", { name: "原生子属性name", values: "原生子属性value" });
 
         const extensions = moddle.create("bpmn:ExtensionElements", { values: [] });
+
+        console.log(1, shape.extensionElements);
+        if (!shape.extensionElements) {
+            const newExtensionElements = moddle.create("bpmn:ExtensionElements");
+            newExtensionElements.values = [];
+            // for each object in the array of objects, preform this:
+            const newValues = moddle.createAny("camunda:in"); // variable
+            newValues.sourceExpression = "true"; // value
+            newValues.target = "variable_xxx"; // name
+            newExtensionElements.values.push(newValues);
+
+            this.getModeling().updateProperties(shape, {
+                extensionElements: newExtensionElements
+            });
+        }
+
         // // 开始节点插入原生属性
         // if (eventObj.element.type === "bpmn:StartEvent") {
         //     props.values.push(propItem);
@@ -93,6 +120,28 @@ export class BpmnjsComponent implements OnInit {
         // }
 
         console.log('extensions:', extensions);
+
+    }
+
+    public async userTaskChangeParticipant(): Promise<void> {
+        const shape = this.getElementRegistry().get('Activity_02bkdrb');
+        console.log('shape:', shape);
+        console.log('shap type', shape.type);
+        const moddle = this.getModdle();
+        if (!shape.extensionElements) {
+            const newExtensionElements = moddle.create("bpmn:ExtensionElements");
+            newExtensionElements.values = [];
+            // for each object in the array of objects, preform this:
+            const newValues = moddle.createAny("mo:Participant"); // variable
+            newValues.sourceExpression = "true"; // value
+            newValues.target = "variable_xxx"; // name
+            newExtensionElements.values.push(newValues);
+
+            this.getModeling().updateProperties(shape, {
+                extensionElements: newExtensionElements
+            });
+        }
+
 
     }
 
