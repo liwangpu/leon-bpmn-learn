@@ -1,2 +1,22 @@
-<div class="content" id="container">
+<div class="navbar" [class.collapse]='isCollapsed'>
+    <div class="nav">
+        <ul nz-menu nzMode="inline" nzTheme="dark" [nzInlineCollapsed]="isCollapsed">
+            <li nz-submenu nzTitle="BpmnJs学习" nzIcon="setting" nzOpen>
+                <ul>
+                    <li nz-menu-item routerLink="/bpmnjs" routerLinkActive="ant-menu-item-selected">Bpmn设计器</li>
+                        <li nz-menu-item routerLink="/moddle" routerLinkActive="ant-menu-item-selected">Moddle使用</li>
+                </ul>
+            </li>
+        </ul>
+    </div>
+    <div class="tools">
+        <button nz-button nzType="primary" (click)="toggleCollapsed()">
+            <i nz-icon [nzType]="isCollapsed ? 'menu-unfold' : 'menu-fold'"></i>
+        </button>
+    </div>
+</div>
+<div class="content">
+    <div class="wrapper">
+        <router-outlet></router-outlet>
+    </div>
 </div>

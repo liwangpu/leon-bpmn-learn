@@ -1,8 +1,6 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
-import Modeler from 'bpmn-js/lib/Modeler';
-import * as bjs from 'bpmn-js';
-import { HttpClient } from '@angular/common/http';
 
+const menuCollapseStatusKey = 'menuCollapseStatus';
 @Component({
     selector: 'app-root',
     templateUrl: './app.component.html',
@@ -11,15 +9,21 @@ import { HttpClient } from '@angular/common/http';
 })
 export class AppComponent implements OnInit {
 
-    public constructor(
-        private http: HttpClient
-    ) {
+    public isCollapsed = false;
+    public constructor() {
+        const menuCollapseStatusKeyStr = localStorage.getItem(menuCollapseStatusKey);
+        if (menuCollapseStatusKeyStr) {
+            this.isCollapsed = JSON.parse(menuCollapseStatusKeyStr);
+        }
+    }
+
+    public ngOnInit(): void {
 
     }
 
-    public async ngOnInit(): Promise<void> {
-        const bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
-        const modeler = new Modeler({ container: '#container' });
-        await modeler.importXML(bpmnXML);
+    public toggleCollapsed(): void {
+        this.isCollapsed = !this.isCollapsed;
+        localStorage.setItem(menuCollapseStatusKey, `${this.isCollapsed}`);
     }
+
 }

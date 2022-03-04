@@ -17,6 +17,7 @@
     "@angular/platform-browser": "~11.2.14",
     "@angular/platform-browser-dynamic": "~11.2.14",
     "@angular/router": "~11.2.14",
+    "ng-zorro-antd": "^11.4.2",
     "bpmn-js": "^9.0.2",
     "faker": "^5.5.3",
     "lodash": "^4.17.21",
