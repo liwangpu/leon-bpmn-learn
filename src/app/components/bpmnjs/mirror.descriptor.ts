@@ -1,23 +1,82 @@
 export const Descriptor = {
-    "name": "Mirror",
-    "uri": "http://camunda.org/schema/1.0/bpmn",
-    "prefix": "mo",
+    "name": "flowable",
+    "uri": "http://flowable.org/bpmn",
+    "prefix": "flowable",
     "xml": {
         "tagAlias": "lowerCase"
     },
     "associations": [],
     "types": [
         {
-            "name": "Participant",
+            "name": "employee",
+            "properties": [
+                {
+                    "name": "id",
+                    "isAttr": true,
+                    "type": "String"
+                },
+                {
+                    "name": "age",
+                    "isAttr": true,
+                    "type": "Number",
+                    "default": 1
+                },
+            ]
+        },
+        {
+            "name": "assignee",
+            "superClass": ["Element"],
+            "properties": [
+                {
+                    "name": "type",
+                    "type": "String",
+                    "isAttr": true,
+                },
+                {
+                    "name": "value",
+                    "type": "String",
+                    "isAttr": true,
+                },
+            ]
+        },
+        {
+            "name": "Properties",
             "superClass": [
-                "InOutBinding"
+                "Element"
             ],
             "meta": {
-                "allowedIn": [
-                    "bpmn:CallActivity",
-                    "bpmn:SignalEventDefinition"
-                ]
-            }
+                "allowedIn": ["*"]
+            },
+            "properties": [
+                {
+                    "name": "values",
+                    "type": "Property",
+                    "isMany": true
+                }
+            ]
+        },
+        {
+            "name": "Property",
+            "superClass": [
+                "Element"
+            ],
+            "properties": [
+                {
+                    "name": "id",
+                    "type": "String",
+                    "isAttr": true
+                },
+                {
+                    "name": "name",
+                    "type": "String",
+                    "isAttr": true
+                },
+                {
+                    "name": "value",
+                    "type": "String",
+                    "isAttr": true
+                }
+            ]
         },
     ],
     "emumerations": []

@@ -1,8 +1,11 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import Modeler from 'bpmn-js/lib/Modeler';
 import { HttpClient } from '@angular/common/http';
-import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
+// import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
 import { Descriptor as MirrorDescriptor } from './mirror.descriptor';
+import minimapModule from 'diagram-js-minimap';
+
+const cacheStorageKey: string = 'flowCache';
 
 @Component({
     selector: 'app-bpmnjs',
@@ -35,7 +38,7 @@ export class BpmnjsComponent implements OnInit {
         return this.modeler.get("modeling");
     }
 
-    public getModdle() {
+    public getModdle(): Moddle.Moddle {
         return this.modeler.get("moddle");
     }
 
@@ -44,105 +47,147 @@ export class BpmnjsComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
-        const bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
+        let bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
         this.modeler = new Modeler({
             container: '#container',
+            // additionalModules: [
+            //     minimapModule
+            // ],
             moddleExtensions: {
-                camunda: MirrorDescriptor,
+                flowable: MirrorDescriptor,
                 // mirror: MirrorDescriptor
             }
         });
+
+        const flowCacheStr = localStorage.getItem(cacheStorageKey);
+        if (flowCacheStr) {
+            bpmnXML = flowCacheStr;
+            console.log('cache:', flowCacheStr);
+        }
         await this.modeler.importXML(bpmnXML);
 
         this.modeler.on('element.click', (e: any) => {
             // console.log('click:', e);
-            console.log('element:', e.element);
-            const shape = this.getElementRegistry().get('StartEvent_1');
-            console.log('shape:', shape);
+            // console.log('element:', e.element);
+            // const shape = this.getElementRegistry().get(e.element.id);
+            // console.log('type:', shape?.type);
+            // console.log('shape:', shape);
+            // const ext = shape.businessObject.extensionElements;
+            // console.log('shape:', shape);
+            // console.log('ext:', ext.boys);
+            // const boy = ext.boys[0];
+            // console.log('boy:', boy.name);
+
+        });
+
+        this.modeler.on('commandStack.changed', async () => {
+            const { xml } = await this.modeler.saveXML({ format: true });
+            localStorage.setItem(cacheStorageKey, xml);
         });
     }
 
-    public async translate(): Promise<void> {
+    public async translate(): Promise<string> {
         const { xml } = await this.modeler.saveXML({ format: true });
-        console.log('xml:', xml);
+        console.log(xml);
+        return xml;
     }
 
-    public async changeNode(): Promise<void> {
-        // let dfs = this.modeler.getDefinitions();
-        const els = this.getElementRegistry().getAll();
-        const shape = this.getElementRegistry().get('StartEvent_1');
-        console.log('shape:', shape);
-        console.log('shap type', shape.type);
-
-        // console.log(2, el);
-        // console.log(3,this.getElementRegistry());
-        const moddle = this.getModdle();
-        // // 自定义属性1
-        // const attrOne = moddle.create("se:AttrOne", { name: "testAttrOne", values: [] });
-        // // 自定义属性子属性
-        // const attrOneProp = moddle.create("se:AttrOneProp", { propName: "propName1", value: "propValue1" })
-        // // 自定义属性2
-        // const attrTwo = moddle.create("se:AttrTwo", { value: "testAttrTwo" })
-        // // 原生属性Properties
-        const props = moddle.create("camunda:Properties", { values: [] });
-        // // 原生属性Properties的子属性
-        // const propItem = moddle.create("camunda:Property", { name: "原生子属性name", values: "原生子属性value" });
-
-        const extensions = moddle.create("bpmn:ExtensionElements", { values: [] });
-
-        console.log(1, shape.extensionElements);
-        if (!shape.extensionElements) {
-            const newExtensionElements = moddle.create("bpmn:ExtensionElements");
-            newExtensionElements.values = [];
-            // for each object in the array of objects, preform this:
-            const newValues = moddle.createAny("camunda:in"); // variable
-            newValues.sourceExpression = "true"; // value
-            newValues.target = "variable_xxx"; // name
-            newExtensionElements.values.push(newValues);
-
-            this.getModeling().updateProperties(shape, {
-                extensionElements: newExtensionElements
-            });
-        }
-
-        // // 开始节点插入原生属性
-        // if (eventObj.element.type === "bpmn:StartEvent") {
-        //     props.values.push(propItem);
-        //     extensions.values.push(props);
-        // }
-        // // 任务节点插入多种属性
-        // if (eventObj.element.type === "bpmn:Task") {
-        //     props.values.push(propItem, propItem);
-
-        //     attrOne.values.push(attrOneProp);
-
-        //     extensions.values.push(props, attrOne, attrTwo);
-        // }
-
-        console.log('extensions:', extensions);
-
+    public clearCache(): void {
+        localStorage.removeItem(cacheStorageKey);
+        location.reload();
     }
 
     public async userTaskChangeParticipant(): Promise<void> {
-        const shape = this.getElementRegistry().get('Activity_02bkdrb');
-        console.log('shape:', shape);
-        console.log('shap type', shape.type);
+        const shape = this.getElementRegistry().get('Activity_06t0e98');
         const moddle = this.getModdle();
-        if (!shape.extensionElements) {
-            const newExtensionElements = moddle.create("bpmn:ExtensionElements");
-            newExtensionElements.values = [];
-            // for each object in the array of objects, preform this:
-            const newValues = moddle.createAny("mo:Participant"); // variable
-            newValues.sourceExpression = "true"; // value
-            newValues.target = "variable_xxx"; // name
-            newExtensionElements.values.push(newValues);
+        console.log('shape:', shape);
+        console.log('businessObject:', shape?.businessObject);
+        console.log('extensionElements:', shape?.businessObject?.extensionElements);
+        let extensionElements = shape?.businessObject?.extensionElements;
+        if (!extensionElements) {
+            console.log('create ext:',);
+            // extensionElements = moddle.create("flowable:extensionElements");
+            extensionElements = moddle.create("bpmn:ExtensionElements");
+        }
+        extensionElements.values = [];
+        // extensionElements.id = 'my_custom_ext';
+        const newUser = moddle.create("flowable:assignee"); // variable
+        newUser.type = 'user';
+        newUser.value = '11,22';
+        extensionElements.values.push(newUser);
 
-            this.getModeling().updateProperties(shape, {
-                extensionElements: newExtensionElements
-            });
+        // const newRow = moddle.create("flowable:assignee"); // variable
+        // newRow.type = 'role';
+        // newRow.value = '33';
+        // extensionElements.values.push(newRow);
+        this.getModeling().updateProperties(shape, {
+            extensionElements
+        });
+        this.translate();
+    }
+
+    public async userTaskName(): Promise<void> {
+        const shape = this.getElementRegistry().get('Activity_06t0e98');
+        console.log('shape', shape);
+        const moddle = this.getModdle();
+        console.log('businessObject', shape?.businessObject);
+        console.log('extensionElements', shape?.businessObject?.extensionElements);
+        // console.log('title', shape.di);
+        // shape.businessObject.name = "测试";
+        const extensionElements = moddle.create("bpmn:ExtensionElements");
+        extensionElements.values = [];
+        const newUser = moddle.create("flowable:assignee"); // variable
+        newUser.type = 'user';
+        newUser.value = '11,22';
+        extensionElements.values.push(newUser);
+
+        const newRow = moddle.create("flowable:assignee"); // variable
+        newRow.type = 'role';
+        newRow.value = '33';
+        extensionElements.values.push(newRow);
+        // this.getModeling().updateProperties(shape, {
+        //     extensionElements
+        // });
+        shape.businessObject.name = 'xxxxx';
+        this.getModeling().updateProperties(shape, shape.businessObject);
+
+        // this.translate();
+    }
+
+    public async test(): Promise<void> {
+        const shape = this.getElementRegistry().get('Activity_06t0e98');
+        console.log('shape:', shape);
+        console.log('type:', shape.$type);
+        console.log('businessObject:', shape?.businessObject);
+        let extensionElements = shape?.businessObject?.extensionElements;
+        console.log('extensionElements:', extensionElements);
+        if (extensionElements) {
+            const values = extensionElements.get('values');
+            console.log('values:', values);
         }
 
+        // const all = this.getElementRegistry().getAll();
+        // console.log('all:', all);
 
+    }
+
+    public async test2(): Promise<void> {
+        const shape = this.getElementRegistry().get('Activity_06t0e98');
+        const moddle = this.getModdle();
+        let extensionElements = shape?.businessObject?.extensionElements;
+        if (!extensionElements) {
+            console.log('create ext:',);
+            // extensionElements = moddle.create("flowable:extensionElements");
+            extensionElements = moddle.create("bpmn:ExtensionElements");
+            extensionElements.values = [];
+        }
+
+        const properties = moddle.create("flowable:Properties");
+        extensionElements.values.push(properties);
+        this.getModeling().updateProperties(shape, {
+            extensionElements
+        });
+        this.translate();
     }
 
     private testEvent(): void {
@@ -405,4 +450,5 @@ export class BpmnjsComponent implements OnInit {
             });
         });
     }
+
 }
