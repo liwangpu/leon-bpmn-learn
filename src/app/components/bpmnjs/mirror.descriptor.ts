@@ -1,4 +1,4 @@
-export const Descriptor = {
+export const Descriptor: { [key: string]: any } = {
     "name": "flowable",
     "uri": "http://flowable.org/bpmn",
     "prefix": "flowable",
@@ -24,7 +24,7 @@ export const Descriptor = {
             ]
         },
         {
-            "name": "assignee",
+            "name": "Assignee",
             "superClass": ["Element"],
             "properties": [
                 {

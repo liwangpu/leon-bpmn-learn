@@ -62,8 +62,9 @@ export class BpmnjsComponent implements OnInit {
         const flowCacheStr = localStorage.getItem(cacheStorageKey);
         if (flowCacheStr) {
             bpmnXML = flowCacheStr;
-            console.log('cache:', flowCacheStr);
+            // console.log('cache:', flowCacheStr);
         }
+        // console.log('title:',bpmnXML);
         await this.modeler.importXML(bpmnXML);
 
         this.modeler.on('element.click', (e: any) => {
@@ -111,16 +112,17 @@ export class BpmnjsComponent implements OnInit {
         }
         extensionElements.values = [];
         // extensionElements.id = 'my_custom_ext';
-        const newUser = moddle.create("flowable:assignee"); // variable
+        const newUser = moddle.create("flowable:Assignee"); // variable
         newUser.type = 'user';
-        newUser.value = '11,22';
+        newUser.value = +new Date();
         extensionElements.values.push(newUser);
 
-        // const newRow = moddle.create("flowable:assignee"); // variable
-        // newRow.type = 'role';
-        // newRow.value = '33';
-        // extensionElements.values.push(newRow);
+        const newRow = moddle.create("flowable:Assignee"); // variable
+        newRow.type = 'role';
+        newRow.value =+new Date();
+        extensionElements.values.push(newRow);
         this.getModeling().updateProperties(shape, {
+            name: '修改中....',
             extensionElements
         });
         this.translate();
@@ -130,26 +132,32 @@ export class BpmnjsComponent implements OnInit {
         const shape = this.getElementRegistry().get('Activity_06t0e98');
         console.log('shape', shape);
         const moddle = this.getModdle();
-        console.log('businessObject', shape?.businessObject);
-        console.log('extensionElements', shape?.businessObject?.extensionElements);
-        // console.log('title', shape.di);
-        // shape.businessObject.name = "测试";
-        const extensionElements = moddle.create("bpmn:ExtensionElements");
-        extensionElements.values = [];
-        const newUser = moddle.create("flowable:assignee"); // variable
-        newUser.type = 'user';
-        newUser.value = '11,22';
-        extensionElements.values.push(newUser);
+        // console.log('businessObject', shape?.businessObject);
+        // console.log('extensionElements', shape?.businessObject?.extensionElements);
+        // // console.log('title', shape.di);
+        // // shape.businessObject.name = "测试";
+        // const extensionElements = moddle.create("bpmn:ExtensionElements");
+        // extensionElements.values = [];
+        // const newUser = moddle.create("flowable:assignee"); // variable
+        // newUser.type = 'user';
+        // newUser.value = '11,22';
+        // extensionElements.values.push(newUser);
 
-        const newRow = moddle.create("flowable:assignee"); // variable
-        newRow.type = 'role';
-        newRow.value = '33';
-        extensionElements.values.push(newRow);
+        // const newRow = moddle.create("flowable:assignee"); // variable
+        // newRow.type = 'role';
+        // newRow.value = '33';
+        // extensionElements.values.push(newRow);
         // this.getModeling().updateProperties(shape, {
         //     extensionElements
         // });
-        shape.businessObject.name = 'xxxxx';
-        this.getModeling().updateProperties(shape, shape.businessObject);
+        // shape.businessObject.name = 'xxxxx';
+        // this.getModeling().updateProperties(shape, shape.businessObject);
+
+
+        this.getModeling().updateProperties(shape, {
+            name: 'ksdjfsdfdsf',
+            myggg: 123
+        });
 
         // this.translate();
     }
@@ -176,18 +184,38 @@ export class BpmnjsComponent implements OnInit {
         const moddle = this.getModdle();
         let extensionElements = shape?.businessObject?.extensionElements;
         if (!extensionElements) {
-            console.log('create ext:',);
+            // console.log('create ext:',);
             // extensionElements = moddle.create("flowable:extensionElements");
             extensionElements = moddle.create("bpmn:ExtensionElements");
             extensionElements.values = [];
         }
 
-        const properties = moddle.create("flowable:Properties");
-        extensionElements.values.push(properties);
+        const newRow = moddle.create("flowable:Assignee"); // variable
+        newRow.type = 'role';
+        newRow.value = '33';
+        extensionElements.values.push(newRow);
+
+        // this.getModeling().updateProperties(shape, {
+        //     extensionElements
+        // });
+
         this.getModeling().updateProperties(shape, {
-            extensionElements
+            // extensionElements
         });
         this.translate();
+    }
+
+    public async changeProcessDes(): Promise<void> {
+        const shape = this.getElementRegistry().get('process_Gpx5c4NbTXDd35S3YhFPYsZHfFrSnNTb');
+        const moddle = this.getModdle();
+        console.log('shape:', shape);
+        console.log('businessObject:', shape.businessObject);
+        console.log('documentation:', shape.businessObject.documentation);
+        // let extensionElements = shape.businessObject?.extensionElements;
+        // console.log('extensionElements:', extensionElements);
+        const documentation = shape.businessObject.documentation;
+        documentation.text = "我是描述哦,嘻嘻嘻";
+        this.getModeling().updateProperties(shape, shape.businessObject);
     }
 
     private testEvent(): void {

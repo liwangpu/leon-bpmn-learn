@@ -1,13 +1,10 @@
+export function flowDefinitionGenerator(): string {
+    // tslint:disable-next-line: prefer-immediate-return
+    const definition: string = `
 <?xml version="1.0" encoding="UTF-8"?>
-<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL"
-  xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI"
-  xmlns:dc="http://www.omg.org/spec/DD/20100524/DC"
-  xmlns:di="http://www.omg.org/spec/DD/20100524/DI"
-  xmlns:flowable="http://flowable.org/bpmn"
-  xmlns:activiti="http://activiti.org/bpmn"
-  xmlns:camunda="http://camunda.org/schema/1.0/bpmn" targetNamespace="http://bpmn.io/schema/bpmn">
-  <process id="process_Gpx5c4NbTXDd35S3YhFPYsZHfFrSnNTb" name="name_BKyPMmszemamdAGPAfE5CksApXzWehBr" isExecutable="true" flowable:skipFirstNode="true" flowable:rollbackNode="Activity_06t0e98">
-    <documentation>eewewwewewe</documentation>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" xmlns:flowable="http://flowable.org/bpmn" xmlns:activiti="http://activiti.org/bpmn" xmlns:camunda="http://camunda.org/schema/1.0/bpmn" targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="process_Gpx5c4Nb" name="工作流名称" isExecutable="true" flowable:skipFirstNode="true" flowable:rollbackNode="Activity_06t0e98">
+    <documentation>工作流描述</documentation>
     <startEvent id="startEvent_1">
       <outgoing>Flow_0yhobgw</outgoing>
     </startEvent>
@@ -22,14 +19,14 @@
     <sequenceFlow id="Flow_00ryj5m" sourceRef="Activity_06t0e98" targetRef="Event_058o6mz" />
   </process>
   <bpmndi:BPMNDiagram id="BPMNDiagram_flow">
-    <bpmndi:BPMNPlane id="BPMNPlane_flow" bpmnElement="process_Gpx5c4NbTXDd35S3YhFPYsZHfFrSnNTb">
-      <bpmndi:BPMNEdge id="Flow_0yhobgw_di" bpmnElement="Flow_0yhobgw">
-        <di:waypoint x="276" y="218" />
-        <di:waypoint x="400" y="218" />
-      </bpmndi:BPMNEdge>
+    <bpmndi:BPMNPlane id="BPMNPlane_flow" bpmnElement="process_Gpx5c4Nb">
       <bpmndi:BPMNEdge id="Flow_00ryj5m_di" bpmnElement="Flow_00ryj5m">
         <di:waypoint x="500" y="218" />
         <di:waypoint x="632" y="218" />
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge id="Flow_0yhobgw_di" bpmnElement="Flow_0yhobgw">
+        <di:waypoint x="276" y="218" />
+        <di:waypoint x="400" y="218" />
       </bpmndi:BPMNEdge>
       <bpmndi:BPMNShape id="BPMNShape_startEvent_1" bpmnElement="startEvent_1">
         <dc:Bounds x="240" y="200" width="36" height="36" />
@@ -46,3 +43,7 @@
     </bpmndi:BPMNPlane>
   </bpmndi:BPMNDiagram>
 </definitions>
+`;
+
+    return definition;
+}
