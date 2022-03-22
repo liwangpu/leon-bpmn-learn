@@ -4,6 +4,7 @@ import { HttpClient } from '@angular/common/http';
 // import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
 import { Descriptor as MirrorDescriptor } from './mirror.descriptor';
 import minimapModule from 'diagram-js-minimap';
+import { Reader, Writer } from 'moddle-xml';
 
 const cacheStorageKey: string = 'flowCache';
 
@@ -119,7 +120,7 @@ export class BpmnjsComponent implements OnInit {
 
         const newRow = moddle.create("flowable:Assignee"); // variable
         newRow.type = 'role';
-        newRow.value =+new Date();
+        newRow.value = +new Date();
         extensionElements.values.push(newRow);
         this.getModeling().updateProperties(shape, {
             name: '修改中....',
@@ -217,6 +218,15 @@ export class BpmnjsComponent implements OnInit {
         documentation.text = "我是描述哦,嘻嘻嘻";
         this.getModeling().updateProperties(shape, shape.businessObject);
     }
+
+    public async changeXML(): Promise<void> {
+        let bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
+        const reader = new Reader(bpmnXML);
+        const rootHandler = reader.handler('process');
+        console.log('title:',rootHandler);
+
+    }
+
 
     private testEvent(): void {
         const events = [

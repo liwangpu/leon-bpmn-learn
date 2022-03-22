@@ -4,6 +4,7 @@ import { Descriptor } from './custom.descriptor';
 import { Reader, Writer } from 'moddle-xml';
 import BpmnModdle from 'bpmn-moddle';
 import { flowDefinitionGenerator } from './flow-definition-generator';
+import { HttpClient } from '@angular/common/http';
 
 @Component({
     selector: 'app-moddle',
@@ -13,20 +14,22 @@ import { flowDefinitionGenerator } from './flow-definition-generator';
 })
 export class ModdleComponent implements OnInit {
 
-    public constructor() { }
+    public constructor(
+        private http: HttpClient
+    ) { }
 
     public async ngOnInit(): Promise<void> {
-        var custom = new Moddle([Descriptor]);
-        var leon = custom.create('cus:Person', { id: 'a1', name: 'Leon', age: 18 });
+        //         var custom = new Moddle([Descriptor]);
+        //         var leon = custom.create('cus:Person', { id: 'a1', name: 'Leon', age: 18 });
 
-// leon.$parent=
-        console.log('leon:', leon);
-        console.log('type:',leon.$type);
-        console.log('attrs:',leon.$attrs);
-        console.log('1:', leon.$instanceOf('cus:Person'));
+        // // leon.$parent=
+        //         console.log('leon:', leon);
+        //         console.log('type:',leon.$type);
+        //         console.log('attrs:',leon.$attrs);
+        //         console.log('1:', leon.$instanceOf('cus:Person'));
 
-        const a1 = custom.getTypeDescriptor('cus:Person');
-        console.log('a1:', a1);
+        //         const a1 = custom.getTypeDescriptor('cus:Person');
+        //         console.log('a1:', a1);
         // console.log('businessObject:', leon.businessObject);
         // var cars = new Moddle([definition]);
         // var taiga = cars.create('c:Car', { name: 'Taiga' });
@@ -75,7 +78,7 @@ export class ModdleComponent implements OnInit {
         // console.log('xml:', xmlStrUpdated);
     }
 
-    public async metaModelTest(): Promise<void> {
+    public async test(): Promise<void> {
         // let model = new Moddle([carsDefinition]);
         // let taiga = model.create('c:Car', { name: 'Taiga' });
         // let options = { format: false, preamble: false };
@@ -85,6 +88,29 @@ export class ModdleComponent implements OnInit {
 
         // console.log('cars:', model);
         // console.log('xml:', xml);
+        let filename = 'newDiagram.bpmn';
+        let bpmnXML = await this.http.get(`/assets/${filename}`, { responseType: 'text' }).toPromise();
+        const moddle = new BpmnModdle();
+        let { rootElement: definitions } = await moddle.fromXML(bpmnXML);
+        console.log('definitions:', definitions);
+
+        let root = definitions.get('rootElements')[0];
+
+        let rootDoc = root.documentation?.length ? root.documentation[0] : null;
+        if (!rootDoc) {
+            const doc = moddle.create('bpmn:Documentation');
+            doc.text="全新的描述";
+            // var cars = new Moddle([Descriptor]);
+            // var ccc = cars.create('cus:Card');
+            root.documentation=[doc];
+            console.log('doc:', doc);
+        }
+        console.log('root:', root);
+        console.log('doc:', rootDoc);
+        // rootDoc.text = "天天开心哦";
+        root.name = '测试改动';
+        let { xml } = await moddle.toXML(definitions);
+        console.log('translate:', xml);
     }
 
 }
