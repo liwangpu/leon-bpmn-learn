@@ -48,7 +48,9 @@ export class BpmnjsComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
-        let bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
+        // let filename = 'diagram.bpmn';
+        let filename = 'gateway.bpmn';
+        let bpmnXML = await this.http.get(`/assets/${filename}`, { responseType: 'text' }).toPromise();
         this.modeler = new Modeler({
             container: '#container',
             // additionalModules: [
@@ -71,12 +73,13 @@ export class BpmnjsComponent implements OnInit {
         this.modeler.on('element.click', (e: any) => {
             // console.log('click:', e);
             // console.log('element:', e.element);
-            // const shape = this.getElementRegistry().get(e.element.id);
-            // console.log('type:', shape?.type);
+            const shape = this.getElementRegistry().get(e.element.id);
+            console.log('type:', shape?.type);
+            console.log('shape:', shape);
+            console.log('businessObject:',shape.businessObject);
+            const ext = shape.businessObject.extensionElements;
             // console.log('shape:', shape);
-            // const ext = shape.businessObject.extensionElements;
-            // console.log('shape:', shape);
-            // console.log('ext:', ext.boys);
+            console.log('ext:', ext);
             // const boy = ext.boys[0];
             // console.log('boy:', boy.name);
 
@@ -223,8 +226,13 @@ export class BpmnjsComponent implements OnInit {
         let bpmnXML = await this.http.get('/assets/diagram.bpmn', { responseType: 'text' }).toPromise();
         const reader = new Reader(bpmnXML);
         const rootHandler = reader.handler('process');
-        console.log('title:',rootHandler);
+        console.log('title:', rootHandler);
 
+    }
+
+    public async reRender(): Promise<void> {
+        let bpmnXML = await this.http.get('/assets/newDiagram.bpmn', { responseType: 'text' }).toPromise();
+        await this.modeler.importXML(bpmnXML);
     }
 
 
