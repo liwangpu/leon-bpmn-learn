@@ -9,11 +9,11 @@ import { HttpClient } from '@angular/common/http';
 @Component({
     selector: 'app-moddle',
     templateUrl: './moddle.component.html',
-    styleUrls: ['./moddle.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrls: ['./moddle.component.scss']
 })
 export class ModdleComponent implements OnInit {
 
+    public xml: string = flowDefinitionGenerator();
     public constructor(
         private http: HttpClient
     ) { }
@@ -92,25 +92,41 @@ export class ModdleComponent implements OnInit {
         let bpmnXML = await this.http.get(`/assets/${filename}`, { responseType: 'text' }).toPromise();
         const moddle = new BpmnModdle();
         let { rootElement: definitions } = await moddle.fromXML(bpmnXML);
-        console.log('definitions:', definitions);
+        // console.log('definitions:', definitions);
 
         let root = definitions.get('rootElements')[0];
 
         let rootDoc = root.documentation?.length ? root.documentation[0] : null;
+
         if (!rootDoc) {
             const doc = moddle.create('bpmn:Documentation');
-            doc.text="全新的描述";
+            doc.text = "全新的描述";
             // var cars = new Moddle([Descriptor]);
             // var ccc = cars.create('cus:Card');
-            root.documentation=[doc];
-            console.log('doc:', doc);
+            root.documentation = [doc];
         }
-        console.log('root:', root);
-        console.log('doc:', rootDoc);
+        // console.log('root:', root);
+        // console.log('doc:', rootDoc);
         // rootDoc.text = "天天开心哦";
         root.name = '测试改动';
         let { xml } = await moddle.toXML(definitions);
-        console.log('translate:', xml);
+        // console.log('translate:', xml);
+        this.xml = xml;
+        // console.log('xxx:',this.xml);
     }
 
+    public async updateStartendExtensionPropertyElement(): Promise<void> {
+        let bpmnXML = flowDefinitionGenerator();
+        const moddle = new BpmnModdle();
+        let { rootElement: definitions } = await moddle.fromXML(bpmnXML);
+        let root = definitions.get('rootElements')[0];
+
+        const p1 = moddle.create('bpmn:Property');
+        p1.name = "ssssdsd";
+        console.log('p1:', p1);
+        root.properties = [p1];
+        console.log('root:', root);
+        let { xml } = await moddle.toXML(definitions);
+        this.xml = xml;
+    }
 }

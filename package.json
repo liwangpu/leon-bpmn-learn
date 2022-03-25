@@ -19,6 +19,8 @@
     "@angular/router": "~11.2.14",
     "ng-zorro-antd": "^11.4.2",
     "diagram-js-minimap": "^1.2.1",
+    "@materia-ui/ngx-monaco-editor": "^5.1.0",
+    "monaco-editor": "^0.21.2",
     "bpmn-js": "^9.0.2",
     "faker": "^5.5.3",
     "lodash": "^4.17.21",

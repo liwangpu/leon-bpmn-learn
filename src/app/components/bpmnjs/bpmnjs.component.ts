@@ -7,15 +7,18 @@ import minimapModule from 'diagram-js-minimap';
 import { Reader, Writer } from 'moddle-xml';
 
 const cacheStorageKey: string = 'flowCache';
+const cacheXmlFilenameKey: string = 'xmlFilename';
 
 @Component({
     selector: 'app-bpmnjs',
     templateUrl: './bpmnjs.component.html',
-    styleUrls: ['./bpmnjs.component.scss'],
-    changeDetection: ChangeDetectionStrategy.OnPush
+    styleUrls: ['./bpmnjs.component.scss']
 })
 export class BpmnjsComponent implements OnInit {
 
+    public filename: string;
+    public simpleBpmnDoc = 'gateway';
+    public gatewayBpmnDoc = 'gateway';
     public modeler: any;
     public constructor(
         private http: HttpClient
@@ -48,9 +51,12 @@ export class BpmnjsComponent implements OnInit {
     }
 
     public async ngOnInit(): Promise<void> {
-        // let filename = 'diagram.bpmn';
-        let filename = 'gateway.bpmn';
-        let bpmnXML = await this.http.get(`/assets/${filename}`, { responseType: 'text' }).toPromise();
+        let bpmnXML = localStorage.getItem(cacheStorageKey);
+        if (!bpmnXML) {
+            bpmnXML = await this.loadXML(this.simpleBpmnDoc);
+        }
+        this.filename = localStorage.getItem(cacheXmlFilenameKey);
+
         this.modeler = new Modeler({
             container: '#container',
             // additionalModules: [
@@ -62,11 +68,7 @@ export class BpmnjsComponent implements OnInit {
             }
         });
 
-        const flowCacheStr = localStorage.getItem(cacheStorageKey);
-        if (flowCacheStr) {
-            bpmnXML = flowCacheStr;
-            // console.log('cache:', flowCacheStr);
-        }
+
         // console.log('title:',bpmnXML);
         await this.modeler.importXML(bpmnXML);
 
@@ -74,12 +76,12 @@ export class BpmnjsComponent implements OnInit {
             // console.log('click:', e);
             // console.log('element:', e.element);
             const shape = this.getElementRegistry().get(e.element.id);
-            console.log('type:', shape?.type);
-            console.log('shape:', shape);
-            console.log('businessObject:',shape.businessObject);
+            // console.log('type:', shape?.type);
+            // console.log('shape:', shape);
+            // console.log('businessObject:',shape.businessObject);
             const ext = shape.businessObject.extensionElements;
             // console.log('shape:', shape);
-            console.log('ext:', ext);
+            // console.log('ext:', ext);
             // const boy = ext.boys[0];
             // console.log('boy:', boy.name);
 
@@ -97,9 +99,54 @@ export class BpmnjsComponent implements OnInit {
         return xml;
     }
 
+    public async save(): Promise<void> {
+        const { xml } = await this.modeler.saveXML({ format: true });
+        localStorage.setItem(cacheStorageKey, xml);
+    }
+
+    public async loadSimpleXML(): Promise<void> {
+        let xml = await this.loadXML(this.simpleBpmnDoc);
+        await this.modeler.importXML(xml);
+        this.save();
+    }
+
+    public async loadGatewayXML(): Promise<void> {
+        let xml = await this.loadXML(this.gatewayBpmnDoc);
+        await this.modeler.importXML(xml);
+        this.save();
+    }
+
+    public async checkGatewayElement(): Promise<void> {
+        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        console.log('shape:', shape.definition);
+        const businessObject = shape.businessObject;
+        console.log('businessObject', businessObject);
+        const outgoing = businessObject.outgoing;
+        console.log('outgoing', outgoing);
+    }
+
     public clearCache(): void {
         localStorage.removeItem(cacheStorageKey);
         location.reload();
+    }
+
+    public async updateStartendExtensionPropertyElement(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const businessObject = shape.businessObject;
+
+        // const extDefinition = moddle.create("bpmn:ExtensionDefinition");
+        // extDefinition.name='aaa';
+        // // extDefinition.name='aaa';
+        // businessObject.extensionDefinitions=extDefinition;
+
+        const extDef = moddle.create("bpmn:ExtensionDefinition");
+        extDef.name = "测试修改";
+        businessObject.definition = "sdfsdf";
+
+        businessObject.name = "测试标题";
+        this.getModeling().updateProperties(shape, shape.businessObject);
+        this.translate();
     }
 
     public async userTaskChangeParticipant(): Promise<void> {
@@ -233,6 +280,12 @@ export class BpmnjsComponent implements OnInit {
     public async reRender(): Promise<void> {
         let bpmnXML = await this.http.get('/assets/newDiagram.bpmn', { responseType: 'text' }).toPromise();
         await this.modeler.importXML(bpmnXML);
+    }
+
+    private loadXML(filename: string): Promise<string> {
+        this.filename = filename;
+        localStorage.setItem(cacheXmlFilenameKey, filename);
+        return this.http.get(`/assets/${filename}.bpmn`, { responseType: 'text' }).toPromise();
     }
 
 

@@ -15,6 +15,10 @@ import * as fromIcon from '@ant-design/icons-angular/icons';
 import { NzIconModule } from 'ng-zorro-antd/icon';
 import { NzMenuModule } from 'ng-zorro-antd/menu';
 import { NzButtonModule } from 'ng-zorro-antd/button';
+import { NzDropDownModule } from 'ng-zorro-antd/dropdown';
+import { XmlViewerComponent } from './components/xml-viewer/xml-viewer.component';
+import { MonacoEditorModule } from '@materia-ui/ngx-monaco-editor';
+import { FormsModule } from '@angular/forms';
 
 registerLocaleData(zh);
 
@@ -24,15 +28,19 @@ const icons: Array<IconDefinition> = [fromIcon.MenuFoldOutline, fromIcon.MenuUnf
     declarations: [
         AppComponent,
         BpmnjsComponent,
-        ModdleComponent
+        ModdleComponent,
+        XmlViewerComponent
     ],
     imports: [
         BrowserModule,
         BrowserAnimationsModule,
+        FormsModule,
         AppRoutingModule,
         HttpClientModule,
         NzMenuModule,
         NzButtonModule,
+        NzDropDownModule,
+        MonacoEditorModule,
         NzIconModule.forRoot(icons),
     ],
     providers: [{ provide: NZ_I18N, useValue: zh_CN }],
