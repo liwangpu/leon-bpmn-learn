@@ -3,11 +3,20 @@ import Modeler from 'bpmn-js/lib/Modeler';
 import { HttpClient } from '@angular/common/http';
 // import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
 import { Descriptor as MirrorDescriptor } from './mirror.descriptor';
+import { Descriptor as FlowableDescriptor } from './flowable.descriptor';
 import minimapModule from 'diagram-js-minimap';
 import { Reader, Writer } from 'moddle-xml';
+import customTranslate from './custom-translate';
+import * as _ from 'lodash';
+
+
 
 const cacheStorageKey: string = 'flowCache';
 const cacheXmlFilenameKey: string = 'xmlFilename';
+
+var customTranslateModule = {
+    translate: ['value', customTranslate]
+};
 
 @Component({
     selector: 'app-bpmnjs',
@@ -22,9 +31,7 @@ export class BpmnjsComponent implements OnInit {
     public modeler: any;
     public constructor(
         private http: HttpClient
-    ) {
-
-    }
+    ) { }
 
     public getCreate() {
         return this.modeler.get("create");
@@ -52,6 +59,7 @@ export class BpmnjsComponent implements OnInit {
 
     public async ngOnInit(): Promise<void> {
         let bpmnXML = localStorage.getItem(cacheStorageKey);
+        console.log('title:', bpmnXML);
         if (!bpmnXML) {
             bpmnXML = await this.loadXML(this.simpleBpmnDoc);
         }
@@ -63,9 +71,14 @@ export class BpmnjsComponent implements OnInit {
             //     minimapModule
             // ],
             moddleExtensions: {
-                flowable: MirrorDescriptor,
-                // mirror: MirrorDescriptor
-            }
+                // flowable: FlowableDescriptor,
+                // mirror: MirrorDescriptor,
+                flowable: { ...FlowableDescriptor, types: [...MirrorDescriptor.types, ...FlowableDescriptor.types] }
+            },
+            // 插件
+            additionalModules: [
+                customTranslateModule
+            ]
         });
 
 
@@ -130,23 +143,65 @@ export class BpmnjsComponent implements OnInit {
         location.reload();
     }
 
-    public async updateStartendExtensionPropertyElement(): Promise<void> {
+    public async updateElementAttrs(): Promise<void> {
         const moddle = this.getModdle();
         const shape = this.getElementRegistry().get('Gateway_1tuosji');
         const businessObject = shape.businessObject;
 
-        // const extDefinition = moddle.create("bpmn:ExtensionDefinition");
-        // extDefinition.name='aaa';
-        // // extDefinition.name='aaa';
-        // businessObject.extensionDefinitions=extDefinition;
 
-        const extDef = moddle.create("bpmn:ExtensionDefinition");
-        extDef.name = "测试修改";
-        businessObject.definition = "sdfsdf";
+        businessObject.$attrs['flowable:my-test'] = '嘻嘻哈哈';
 
-        businessObject.name = "测试标题";
+        // this.getModeling().updateProperties(shape, shape.businessObject);
+        let extensionElements = shape?.businessObject?.extensionElements;
+        if (!extensionElements) {
+            extensionElements = moddle.create('bpmn:ExtensionElements');
+        }
+        shape.businessObject.extensionElements = extensionElements;
         this.getModeling().updateProperties(shape, shape.businessObject);
-        this.translate();
+        const xml = await this.translate();
+        localStorage.setItem(cacheStorageKey, xml);
+    }
+
+    public async updateElementExtension(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const businessObject = shape.businessObject;
+        let extensionElements = shape?.businessObject?.extensionElements || moddle.create('bpmn:ExtensionElements');
+
+        extensionElements.values = [];
+
+        // var exp = "嘻嘻";
+        // const myExp = moddle.create("flowable:MyExpression", { body: `<![CDATA[${exp}]]>` }); // variable
+        // extensionElements.values.push(myExp);
+
+        const e1 = moddle.create("flowable:Employee", { id: 1, age: 18 });
+        extensionElements.values.push(e1);
+
+        var exp = { link: 'and', conditions: [] };
+        const myExp = moddle.create("flowable:ConditionExp", { body: `<![CDATA[${JSON.stringify(exp)}]]>` }); // variable
+        extensionElements.values.push(myExp);
+
+        businessObject.extensionElements = extensionElements;
+        this.getModeling().updateProperties(shape, businessObject);
+
+        const xml = await this.translate();
+        localStorage.setItem(cacheStorageKey, xml);
+    }
+
+    public async checkElementAttrs(): Promise<void> {
+        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const businessObject = shape.businessObject;
+        console.log('attrs:', businessObject.$attrs);
+    }
+
+    public async checkElementExtension(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const businessObject = shape.businessObject;
+        let extensionElements = shape?.businessObject?.extensionElements || moddle.create('bpmn:ExtensionElements');
+
+        let myExp = extensionElements.values.find(e => e.$instanceOf('flowable:ConditionExp'));
+        console.log('exp:', myExp.body);
     }
 
     public async userTaskChangeParticipant(): Promise<void> {

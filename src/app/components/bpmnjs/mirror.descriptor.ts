@@ -1,5 +1,5 @@
 export const Descriptor: { [key: string]: any } = {
-    "name": "flowable",
+    "name": "Flowable",
     "uri": "http://flowable.org/bpmn",
     "prefix": "flowable",
     "xml": {
@@ -8,7 +8,7 @@ export const Descriptor: { [key: string]: any } = {
     "associations": [],
     "types": [
         {
-            "name": "employee",
+            "name": "Employee",
             "properties": [
                 {
                     "name": "id",
@@ -24,60 +24,22 @@ export const Descriptor: { [key: string]: any } = {
             ]
         },
         {
-            "name": "Assignee",
-            "superClass": ["Element"],
-            "properties": [
+            'name': 'ConditionExp',
+            'superClass': ['Element'],
+            // 'superClass': ['bpmn:BaseElement'],
+            // 'superClass': ['bpmn:Expression'],
+            'properties': [
                 {
-                    "name": "type",
-                    "type": "String",
-                    "isAttr": true,
-                },
-                {
-                    "name": "value",
-                    "type": "String",
-                    "isAttr": true,
-                },
-            ]
-        },
-        {
-            "name": "Properties",
-            "superClass": [
-                "Element"
-            ],
-            "meta": {
-                "allowedIn": ["*"]
-            },
-            "properties": [
-                {
-                    "name": "values",
-                    "type": "Property",
-                    "isMany": true
+                    "name": "body",
+                    "isBody": true,
+                    // "type": "String",
+                    "type": "Expression",
+                    "xml": {
+                        "serialize": "xsi:type"
+                    }
                 }
             ]
-        },
-        {
-            "name": "Property",
-            "superClass": [
-                "Element"
-            ],
-            "properties": [
-                {
-                    "name": "id",
-                    "type": "String",
-                    "isAttr": true
-                },
-                {
-                    "name": "name",
-                    "type": "String",
-                    "isAttr": true
-                },
-                {
-                    "name": "value",
-                    "type": "String",
-                    "isAttr": true
-                }
-            ]
-        },
+        }
     ],
     "emumerations": []
 };
