@@ -1,5 +1,5 @@
 import { Component, OnInit, ChangeDetectionStrategy } from '@angular/core';
-import { Moddle } from 'moddle';
+import { Element as ModdleElement, Moddle } from 'moddle';
 import { Descriptor } from './custom.descriptor';
 import { Reader, Writer } from 'moddle-xml';
 import BpmnModdle from 'bpmn-moddle';

@@ -1,6 +1,7 @@
 import { ChangeDetectionStrategy, Component, OnInit } from '@angular/core';
 import Modeler from 'bpmn-js/lib/Modeler';
 import { HttpClient } from '@angular/common/http';
+import { Element as ModdleElement, Moddle } from 'moddle';
 // import { Descriptor as CamundaDescriptor } from './camunda.descriptor';
 import { Descriptor as MirrorDescriptor } from './mirror.descriptor';
 import { Descriptor as FlowableDescriptor } from './flowable.descriptor';
@@ -8,6 +9,7 @@ import minimapModule from 'diagram-js-minimap';
 import { Reader, Writer } from 'moddle-xml';
 import customTranslate from './custom-translate';
 import * as _ from 'lodash';
+import { traceUpStreamActivity } from './utils';
 
 
 
@@ -28,6 +30,7 @@ export class BpmnjsComponent implements OnInit {
     public filename: string;
     public simpleBpmnDoc = 'gateway';
     public gatewayBpmnDoc = 'gateway';
+    public traceUpStreamBpmnDoc = 'trace-upstream';
     public modeler: any;
     public constructor(
         private http: HttpClient
@@ -59,7 +62,7 @@ export class BpmnjsComponent implements OnInit {
 
     public async ngOnInit(): Promise<void> {
         let bpmnXML = localStorage.getItem(cacheStorageKey);
-        console.log('title:', bpmnXML);
+        // console.log('title:', bpmnXML);
         if (!bpmnXML) {
             bpmnXML = await this.loadXML(this.simpleBpmnDoc);
         }
@@ -86,18 +89,16 @@ export class BpmnjsComponent implements OnInit {
         await this.modeler.importXML(bpmnXML);
 
         this.modeler.on('element.click', (e: any) => {
-            // console.log('click:', e);
-            // console.log('element:', e.element);
             const shape = this.getElementRegistry().get(e.element.id);
             // console.log('type:', shape?.type);
-            // console.log('shape:', shape);
-            // console.log('businessObject:',shape.businessObject);
+            console.log('shape:', shape);
+            // console.log('businessObject:', shape.businessObject);
             const ext = shape.businessObject.extensionElements;
-            // console.log('shape:', shape);
-            // console.log('ext:', ext);
-            // const boy = ext.boys[0];
-            // console.log('boy:', boy.name);
-
+            if (this.filename === this.traceUpStreamBpmnDoc) {
+                const upstream = traceUpStreamActivity(shape);
+                console.log('upstream:',upstream);
+                // console.log('source:',shape.source);
+            }
         });
 
         this.modeler.on('commandStack.changed', async () => {
@@ -129,8 +130,14 @@ export class BpmnjsComponent implements OnInit {
         this.save();
     }
 
+    public async loadTraceUpStreamXML(): Promise<void> {
+        let xml = await this.loadXML(this.traceUpStreamBpmnDoc);
+        await this.modeler.importXML(xml);
+        this.save();
+    }
+
     public async checkGatewayElement(): Promise<void> {
-        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
         console.log('shape:', shape.definition);
         const businessObject = shape.businessObject;
         console.log('businessObject', businessObject);
@@ -145,11 +152,12 @@ export class BpmnjsComponent implements OnInit {
 
     public async updateElementAttrs(): Promise<void> {
         const moddle = this.getModdle();
-        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
         const businessObject = shape.businessObject;
 
 
-        businessObject.$attrs['flowable:my-test'] = '嘻嘻哈哈';
+        // const attrs = { 'flowable:my-test': '天天开心' };
+        // businessObject.$attrs['flowable:my-test'] = '嘻嘻哈哈';
 
         // this.getModeling().updateProperties(shape, shape.businessObject);
         let extensionElements = shape?.businessObject?.extensionElements;
@@ -157,14 +165,23 @@ export class BpmnjsComponent implements OnInit {
             extensionElements = moddle.create('bpmn:ExtensionElements');
         }
         shape.businessObject.extensionElements = extensionElements;
-        this.getModeling().updateProperties(shape, shape.businessObject);
+        this.getModeling().updateProperties(shape, { extensionElements, ['flowable:my-test1']: '天天开心' });
+
+
         const xml = await this.translate();
         localStorage.setItem(cacheStorageKey, xml);
     }
 
+    public async deleteElementAttrs(): Promise<void> {
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
+        const businessObject = shape.businessObject;
+        console.log('title:', businessObject.$attrs);
+        delete businessObject.$attrs['flowable:my-test'];
+    }
+
     public async updateElementExtension(): Promise<void> {
         const moddle = this.getModdle();
-        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
         const businessObject = shape.businessObject;
         let extensionElements = shape?.businessObject?.extensionElements || moddle.create('bpmn:ExtensionElements');
 
@@ -181,27 +198,46 @@ export class BpmnjsComponent implements OnInit {
         const myExp = moddle.create("flowable:ConditionExp", { body: `<![CDATA[${JSON.stringify(exp)}]]>` }); // variable
         extensionElements.values.push(myExp);
 
-        businessObject.extensionElements = extensionElements;
-        this.getModeling().updateProperties(shape, businessObject);
+        // businessObject.extensionElements = extensionElements;
+        this.getModeling().updateProperties(shape, { extensionElements });
 
         const xml = await this.translate();
         localStorage.setItem(cacheStorageKey, xml);
     }
 
     public async checkElementAttrs(): Promise<void> {
-        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
         const businessObject = shape.businessObject;
         console.log('attrs:', businessObject.$attrs);
     }
 
     public async checkElementExtension(): Promise<void> {
         const moddle = this.getModdle();
-        const shape = this.getElementRegistry().get('Gateway_1tuosji');
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
         const businessObject = shape.businessObject;
         let extensionElements = shape?.businessObject?.extensionElements || moddle.create('bpmn:ExtensionElements');
 
         let myExp = extensionElements.values.find(e => e.$instanceOf('flowable:ConditionExp'));
         console.log('exp:', myExp.body);
+    }
+
+    public async updateGatewayDefault(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Gateway_007fdxl');
+        const businessObject = shape.businessObject;
+        const cd1 = this.getElementRegistry().get('Flow_1xnt7a9').businessObject;
+        // businessObject.default = cd1;
+        this.getModeling().updateProperties(shape, { default: cd1 });
+        const xml = await this.translate();
+        localStorage.setItem(cacheStorageKey, xml);
+    }
+
+    public async checkRefUpStreamNode(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Activity_154zjtd');
+        const businessObject = shape.businessObject;
+        console.log('shape:', shape);
+        console.log('shape:', shape.parent);
     }
 
     public async userTaskChangeParticipant(): Promise<void> {
