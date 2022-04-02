@@ -19,6 +19,8 @@ export class ModdleComponent implements OnInit {
     ) { }
 
     public async ngOnInit(): Promise<void> {
+
+        // let s: CustomShape = { name: 'a', age: 18 };
         //         var custom = new Moddle([Descriptor]);
         //         var leon = custom.create('cus:Person', { id: 'a1', name: 'Leon', age: 18 });
 
@@ -78,7 +80,46 @@ export class ModdleComponent implements OnInit {
         // console.log('xml:', xmlStrUpdated);
     }
 
-    public async test(): Promise<void> {
+    public async testTranslate(): Promise<void> {
+        // let model = new Moddle([carsDefinition]);
+        // let taiga = model.create('c:Car', { name: 'Taiga' });
+        // let options = { format: false, preamble: false };
+        // let writer = new Writer(options);
+        // let xml = writer.toXML(taiga);
+        // console.log('taiga:', taiga);
+
+        // console.log('cars:', model);
+        // console.log('xml:', xml);
+        let filename = 'newDiagram.bpmn';
+        let bpmnXML = await this.http.get(`/assets/simple.bpmn`, { responseType: 'text' }).toPromise();
+        const moddle = new BpmnModdle();
+        let res = await moddle.fromXML(bpmnXML);
+        console.log('res:', res);
+
+        // let { rootElement: definitions } = await moddle.fromXML(bpmnXML);
+        // console.log('definitions:', definitions);
+
+        // let root = definitions.get('rootElements')[0];
+
+        // let rootDoc = root.documentation?.length ? root.documentation[0] : null;
+
+        // if (!rootDoc) {
+        //     const doc = moddle.create('bpmn:Documentation');
+        //     doc.text = "全新的描述";
+        //     // var cars = new Moddle([Descriptor]);
+        //     // var ccc = cars.create('cus:Card');
+        //     root.documentation = [doc];
+        // }
+        // // console.log('root:', root);
+        // // console.log('doc:', rootDoc);
+        // // rootDoc.text = "天天开心哦";
+        // root.name = '测试改动';
+        // let { xml } = await moddle.toXML(definitions);
+        // // console.log('translate:', xml);
+        // this.xml = xml;
+    }
+
+    public async test2(): Promise<void> {
         // let model = new Moddle([carsDefinition]);
         // let taiga = model.create('c:Car', { name: 'Taiga' });
         // let options = { format: false, preamble: false };
@@ -91,28 +132,8 @@ export class ModdleComponent implements OnInit {
         let filename = 'newDiagram.bpmn';
         let bpmnXML = await this.http.get(`/assets/${filename}`, { responseType: 'text' }).toPromise();
         const moddle = new BpmnModdle();
-        let { rootElement: definitions } = await moddle.fromXML(bpmnXML);
-        // console.log('definitions:', definitions);
-
-        let root = definitions.get('rootElements')[0];
-
-        let rootDoc = root.documentation?.length ? root.documentation[0] : null;
-
-        if (!rootDoc) {
-            const doc = moddle.create('bpmn:Documentation');
-            doc.text = "全新的描述";
-            // var cars = new Moddle([Descriptor]);
-            // var ccc = cars.create('cus:Card');
-            root.documentation = [doc];
-        }
-        // console.log('root:', root);
-        // console.log('doc:', rootDoc);
-        // rootDoc.text = "天天开心哦";
-        root.name = '测试改动';
-        let { xml } = await moddle.toXML(definitions);
-        // console.log('translate:', xml);
-        this.xml = xml;
-        // console.log('xxx:',this.xml);
+        let res = await moddle.fromXML(bpmnXML);
+        console.log('res:', res);
     }
 
     public async updateStartendExtensionPropertyElement(): Promise<void> {

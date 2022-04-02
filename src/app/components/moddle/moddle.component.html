@@ -5,6 +5,8 @@
         <button nz-button nz-dropdown nzSize='small' [nzDropdownMenu]="m1" nzPlacement="bottomRight">节点修改</button>
         <nz-dropdown-menu #m1="nzDropdownMenu">
             <ul nz-menu>
+                <li nz-menu-item (click)="test2()">测试</li>
+                <li nz-menu-item (click)="testTranslate()">测试翻译</li>
                 <li nz-menu-item (click)="updateStartendExtensionPropertyElement()">修改起始节点Extension属性</li>
             </ul>
         </nz-dropdown-menu>

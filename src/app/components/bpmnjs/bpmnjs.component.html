@@ -6,11 +6,19 @@
         <nz-dropdown-menu #m1="nzDropdownMenu">
             <ul nz-menu>
                 <!-- 网关节点文档的测试 -->
+                <ng-container *ngIf="filename===simpleBpmnDoc">
+                    <li nz-menu-item (click)='changeSimpleXML2Element()'>修改中间节点测试翻译</li>
+                </ng-container>
+                <!-- 网关节点文档的测试 -->
                 <ng-container *ngIf="filename===gatewayBpmnDoc">
                     <li nz-menu-item (click)='updateElementAttrs()'>修改起始节点Attrs属性</li>
                     <li nz-menu-item (click)='deleteElementAttrs()'>删除起始节点Attrs属性</li>
                     <li nz-menu-item (click)='updateElementExtension()'>修改连线节点Extension属性</li>
                     <li nz-menu-item (click)='updateGatewayDefault()'>修改网关节点默认条件</li>
+                </ng-container>
+                <!-- 纯flowable测试 -->
+                <ng-container *ngIf="filename===flowableBpmnDoc">
+                    <li nz-menu-item (click)='changeFlowableAttrs()'>测试添加Flowable相关属性</li>
                 </ng-container>
             </ul>
         </nz-dropdown-menu>
@@ -35,6 +43,7 @@
                 <li nz-menu-item (click)='loadSimpleXML()'>加载简单xml</li>
                 <li nz-menu-item (click)='loadGatewayXML()'>加载网关xml</li>
                 <li nz-menu-item (click)='loadTraceUpStreamXML()'>加载溯源xml</li>
+                <li nz-menu-item (click)='loadFlowableXML()'>加纯Flowablexml</li>
             </ul>
         </nz-dropdown-menu>
 

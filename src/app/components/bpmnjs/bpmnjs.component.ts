@@ -8,8 +8,9 @@ import { Descriptor as FlowableDescriptor } from './flowable.descriptor';
 import minimapModule from 'diagram-js-minimap';
 import { Reader, Writer } from 'moddle-xml';
 import customTranslate from './custom-translate';
+// import { el } from 'bpmn-moddle';
 import * as _ from 'lodash';
-import { traceUpStreamActivity } from './utils';
+import { traceUpStreamElement } from './utils';
 
 
 
@@ -28,44 +29,27 @@ var customTranslateModule = {
 export class BpmnjsComponent implements OnInit {
 
     public filename: string;
-    public simpleBpmnDoc = 'gateway';
-    public gatewayBpmnDoc = 'gateway';
-    public traceUpStreamBpmnDoc = 'trace-upstream';
+    public readonly simpleBpmnDoc = 'simple';
+    public readonly gatewayBpmnDoc = 'gateway';
+    public readonly traceUpStreamBpmnDoc = 'trace-upstream';
+    public readonly flowableBpmnDoc = 'flowable';
     public modeler: any;
     public constructor(
         private http: HttpClient
     ) { }
 
-    public getCreate() {
-        return this.modeler.get("create");
-    }
-
-    public getElementFactory() {
-        return this.modeler.get("elementFactory");
-    }
-
-    public getElementRegistry() {
-        return this.modeler.get("elementRegistry");
-    }
-
-    public getModeling() {
-        return this.modeler.get("modeling");
-    }
-
-    public getModdle(): Moddle.Moddle {
-        return this.modeler.get("moddle");
-    }
-
-    public getPropertiesPanel() {
-        return this.modeler.get("propertiesPanel");
-    }
 
     public async ngOnInit(): Promise<void> {
-        let bpmnXML = localStorage.getItem(cacheStorageKey);
-        // console.log('title:', bpmnXML);
-        if (!bpmnXML) {
-            bpmnXML = await this.loadXML(this.simpleBpmnDoc);
-        }
+        // let bpmnXML = localStorage.getItem(cacheStorageKey);
+        // let lastFilename = localStorage.getItem(cacheXmlFilenameKey);
+        // if (!bpmnXML) {
+        //     bpmnXML = await this.loadXML(lastFilename || this.simpleBpmnDoc);
+        // }
+        // let bpmnXML = this.getTmpXML();
+        let bpmnXML = this.getServerXML();
+
+        // bpmnXML = await this.loadXML(this.simpleBpmnDoc);
+
         this.filename = localStorage.getItem(cacheXmlFilenameKey);
 
         this.modeler = new Modeler({
@@ -89,16 +73,14 @@ export class BpmnjsComponent implements OnInit {
         await this.modeler.importXML(bpmnXML);
 
         this.modeler.on('element.click', (e: any) => {
-            const shape = this.getElementRegistry().get(e.element.id);
+            const shape: any = this.getElementRegistry().get(e.element.id);
             // console.log('type:', shape?.type);
             console.log('shape:', shape);
-            // console.log('businessObject:', shape.businessObject);
-            const ext = shape.businessObject.extensionElements;
-            if (this.filename === this.traceUpStreamBpmnDoc) {
-                const upstream = traceUpStreamActivity(shape);
-                console.log('upstream:',upstream);
-                // console.log('source:',shape.source);
-            }
+            // if (this.filename === this.traceUpStreamBpmnDoc) {
+            // const upstream = traceUpStreamElement(shape.businessObject, ['bpmn:SequenceFlow', 'bpmn:Gateway', 'bpmn:Event'], true);
+            const upstream = traceUpStreamElement(shape.businessObject, [], true);
+            console.log('上游节点:', upstream);
+            // }
         });
 
         this.modeler.on('commandStack.changed', async () => {
@@ -132,6 +114,12 @@ export class BpmnjsComponent implements OnInit {
 
     public async loadTraceUpStreamXML(): Promise<void> {
         let xml = await this.loadXML(this.traceUpStreamBpmnDoc);
+        await this.modeler.importXML(xml);
+        this.save();
+    }
+
+    public async loadFlowableXML(): Promise<void> {
+        let xml = await this.loadXML(this.flowableBpmnDoc);
         await this.modeler.importXML(xml);
         this.save();
     }
@@ -240,6 +228,23 @@ export class BpmnjsComponent implements OnInit {
         console.log('shape:', shape.parent);
     }
 
+    public async changeFlowableAttrs(): Promise<void> {
+        const moddle = this.getModdle();
+        const shape = this.getElementRegistry().get('Activity_0j03jym');
+        let extensionElements = shape?.businessObject?.extensionElements || moddle.create("bpmn:ExtensionElements");
+        extensionElements.values = [];
+
+        let updateObj: { [key: string]: any } = {};
+        updateObj.name = `test ${+new Date()}`;
+
+        updateObj['flowable:my-title'] = '测试名称';
+
+        updateObj.extensionElements = extensionElements;
+        this.getModeling().updateProperties(shape, updateObj);
+        const xml = await this.translate();
+        localStorage.setItem(cacheStorageKey, xml);
+    }
+
     public async userTaskChangeParticipant(): Promise<void> {
         const shape = this.getElementRegistry().get('Activity_06t0e98');
         const moddle = this.getModdle();
@@ -270,94 +275,27 @@ export class BpmnjsComponent implements OnInit {
         this.translate();
     }
 
-    public async userTaskName(): Promise<void> {
-        const shape = this.getElementRegistry().get('Activity_06t0e98');
-        console.log('shape', shape);
-        const moddle = this.getModdle();
-        // console.log('businessObject', shape?.businessObject);
-        // console.log('extensionElements', shape?.businessObject?.extensionElements);
-        // // console.log('title', shape.di);
-        // // shape.businessObject.name = "测试";
-        // const extensionElements = moddle.create("bpmn:ExtensionElements");
-        // extensionElements.values = [];
-        // const newUser = moddle.create("flowable:assignee"); // variable
-        // newUser.type = 'user';
-        // newUser.value = '11,22';
-        // extensionElements.values.push(newUser);
-
-        // const newRow = moddle.create("flowable:assignee"); // variable
-        // newRow.type = 'role';
-        // newRow.value = '33';
-        // extensionElements.values.push(newRow);
-        // this.getModeling().updateProperties(shape, {
-        //     extensionElements
-        // });
-        // shape.businessObject.name = 'xxxxx';
-        // this.getModeling().updateProperties(shape, shape.businessObject);
-
-
-        this.getModeling().updateProperties(shape, {
-            name: 'ksdjfsdfdsf',
-            myggg: 123
-        });
-
-        // this.translate();
-    }
-
-    public async test(): Promise<void> {
-        const shape = this.getElementRegistry().get('Activity_06t0e98');
-        console.log('shape:', shape);
-        console.log('type:', shape.$type);
-        console.log('businessObject:', shape?.businessObject);
-        let extensionElements = shape?.businessObject?.extensionElements;
-        console.log('extensionElements:', extensionElements);
-        if (extensionElements) {
-            const values = extensionElements.get('values');
-            console.log('values:', values);
-        }
-
-        // const all = this.getElementRegistry().getAll();
-        // console.log('all:', all);
-
-    }
-
-    public async test2(): Promise<void> {
-        const shape = this.getElementRegistry().get('Activity_06t0e98');
-        const moddle = this.getModdle();
-        let extensionElements = shape?.businessObject?.extensionElements;
-        if (!extensionElements) {
-            // console.log('create ext:',);
-            // extensionElements = moddle.create("flowable:extensionElements");
-            extensionElements = moddle.create("bpmn:ExtensionElements");
-            extensionElements.values = [];
-        }
-
-        const newRow = moddle.create("flowable:Assignee"); // variable
-        newRow.type = 'role';
-        newRow.value = '33';
-        extensionElements.values.push(newRow);
-
-        // this.getModeling().updateProperties(shape, {
-        //     extensionElements
-        // });
-
-        this.getModeling().updateProperties(shape, {
-            // extensionElements
-        });
-        this.translate();
-    }
-
-    public async changeProcessDes(): Promise<void> {
-        const shape = this.getElementRegistry().get('process_Gpx5c4NbTXDd35S3YhFPYsZHfFrSnNTb');
+    public async changeSimpleXML2Element(): Promise<void> {
+        const shape = this.getElementRegistry().get('Activity_1hj5vg8');
         const moddle = this.getModdle();
         console.log('shape:', shape);
         console.log('businessObject:', shape.businessObject);
-        console.log('documentation:', shape.businessObject.documentation);
+        // console.log('documentation:', shape.businessObject.documentation);
         // let extensionElements = shape.businessObject?.extensionElements;
         // console.log('extensionElements:', extensionElements);
-        const documentation = shape.businessObject.documentation;
-        documentation.text = "我是描述哦,嘻嘻嘻";
-        this.getModeling().updateProperties(shape, shape.businessObject);
+        // const documentation = shape.businessObject.documentation;
+        // documentation.text = "我是描述哦,嘻嘻嘻";
+        const updateObj: any = {};
+        updateObj.name = `5 ${+new Date()}`;
+        updateObj['flowable:my-test'] = 'my-test';
+
+        let extensionElements = shape?.businessObject?.extensionElements || moddle.create('bpmn:ExtensionElements');
+        extensionElements.values = [];
+        const e1 = moddle.create("flowable:Employee", { id: 'p1', age: 18 }); // variable
+        extensionElements.values.push(e1);
+        updateObj.extensionElements = extensionElements;
+
+        this.getModeling().updateProperties(shape, updateObj);
     }
 
     public async changeXML(): Promise<void> {
@@ -373,12 +311,134 @@ export class BpmnjsComponent implements OnInit {
         await this.modeler.importXML(bpmnXML);
     }
 
+    private getTmpXML(): string {
+        return `
+        <?xml version="1.0" encoding="UTF-8"?>
+        <bpmn:definitions xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI" targetNamespace="http://bpmn.io/schema/bpmn">
+          <bpmn:process id="Process_1t03o4w" isExecutable="false">
+            <bpmn:startEvent id="StartEvent_09hx5ui">
+              <bpmn:outgoing>Flow_080ax4j</bpmn:outgoing>
+            </bpmn:startEvent>
+            <bpmn:exclusiveGateway id="Gateway_0jnjamq">
+              <bpmn:incoming>Flow_080ax4j</bpmn:incoming>
+              <bpmn:outgoing>Flow_0thkae6</bpmn:outgoing>
+            </bpmn:exclusiveGateway>
+            <bpmn:sequenceFlow id="Flow_080ax4j" sourceRef="StartEvent_09hx5ui" targetRef="Gateway_0jnjamq" />
+            <bpmn:sequenceFlow id="Flow_0thkae6" sourceRef="Gateway_0jnjamq" targetRef="Activity_1qtr9ur" />
+            <bpmn:sequenceFlow id="Flow_129jq20" sourceRef="Activity_1qtr9ur" targetRef="Activity_0j03jym" />
+            <bpmn:userTask id="Activity_1qtr9ur" name="1">
+              <bpmn:incoming>Flow_0thkae6</bpmn:incoming>
+              <bpmn:outgoing>Flow_129jq20</bpmn:outgoing>
+            </bpmn:userTask>
+            <bpmn:endEvent id="Event_0wg04aj">
+              <bpmn:incoming>Flow_0yjf17q</bpmn:incoming>
+            </bpmn:endEvent>
+            <bpmn:sequenceFlow id="Flow_0yjf17q" sourceRef="Activity_0j03jym" targetRef="Event_0wg04aj" />
+            <bpmn:userTask id="Activity_0j03jym" name="2">
+              <bpmn:incoming>Flow_129jq20</bpmn:incoming>
+              <bpmn:outgoing>Flow_0yjf17q</bpmn:outgoing>
+            </bpmn:userTask>
+          </bpmn:process>
+          <bpmndi:BPMNDiagram id="BPMNDiagram_1">
+            <bpmndi:BPMNPlane id="BPMNPlane_1" bpmnElement="Process_1t03o4w">
+              <bpmndi:BPMNEdge id="Flow_0yjf17q_di" bpmnElement="Flow_0yjf17q">
+                <di:waypoint x="630" y="120" />
+                <di:waypoint x="702" y="120" />
+              </bpmndi:BPMNEdge>
+              <bpmndi:BPMNEdge id="Flow_129jq20_di" bpmnElement="Flow_129jq20">
+                <di:waypoint x="460" y="120" />
+                <di:waypoint x="530" y="120" />
+              </bpmndi:BPMNEdge>
+              <bpmndi:BPMNEdge id="Flow_0thkae6_di" bpmnElement="Flow_0thkae6">
+                <di:waypoint x="295" y="120" />
+                <di:waypoint x="360" y="120" />
+              </bpmndi:BPMNEdge>
+              <bpmndi:BPMNEdge id="Flow_080ax4j_di" bpmnElement="Flow_080ax4j">
+                <di:waypoint x="188" y="120" />
+                <di:waypoint x="245" y="120" />
+              </bpmndi:BPMNEdge>
+              <bpmndi:BPMNShape id="_BPMNShape_StartEvent_2" bpmnElement="StartEvent_09hx5ui">
+                <dc:Bounds x="152" y="102" width="36" height="36" />
+              </bpmndi:BPMNShape>
+              <bpmndi:BPMNShape id="Gateway_0jnjamq_di" bpmnElement="Gateway_0jnjamq" isMarkerVisible="true">
+                <dc:Bounds x="245" y="95" width="50" height="50" />
+              </bpmndi:BPMNShape>
+              <bpmndi:BPMNShape id="Activity_0dar54s_di" bpmnElement="Activity_1qtr9ur">
+                <dc:Bounds x="360" y="80" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+              </bpmndi:BPMNShape>
+              <bpmndi:BPMNShape id="Event_0wg04aj_di" bpmnElement="Event_0wg04aj">
+                <dc:Bounds x="702" y="102" width="36" height="36" />
+              </bpmndi:BPMNShape>
+              <bpmndi:BPMNShape id="Activity_000f3wi_di" bpmnElement="Activity_0j03jym">
+                <dc:Bounds x="530" y="80" width="100" height="80" />
+                <bpmndi:BPMNLabel />
+              </bpmndi:BPMNShape>
+            </bpmndi:BPMNPlane>
+          </bpmndi:BPMNDiagram>
+        </bpmn:definitions>
+        `;
+    }
+
+    public getServerXML(): string {
+        return `
+        <?xml version="1.0" encoding="UTF-8"?>
+<definitions xmlns="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:flowable="http://flowable.org/bpmn" xmlns:bpmndi="http://www.omg.org/spec/BPMN/20100524/DI" xmlns:omgdc="http://www.omg.org/spec/DD/20100524/DC" xmlns:omgdi="http://www.omg.org/spec/DD/20100524/DI" xmlns:bpmn="http://www.omg.org/spec/BPMN/20100524/MODEL" xmlns:dc="http://www.omg.org/spec/DD/20100524/DC" xmlns:di="http://www.omg.org/spec/DD/20100524/DI"  targetNamespace="http://bpmn.io/schema/bpmn">
+  <process id="Process_1t03o4w" isExecutable="false">
+    <startEvent id="StartEvent_09hx5ui"></startEvent>
+    <exclusiveGateway id="Gateway_0jnjamq"></exclusiveGateway>
+    <sequenceFlow id="Flow_080ax4j" sourceRef="StartEvent_09hx5ui" targetRef="Gateway_0jnjamq"></sequenceFlow>
+    <sequenceFlow id="Flow_0thkae6" sourceRef="Gateway_0jnjamq" targetRef="Activity_1qtr9ur"></sequenceFlow>
+    <sequenceFlow id="Flow_129jq20" sourceRef="Activity_1qtr9ur" targetRef="Activity_0j03jym"></sequenceFlow>
+    <userTask id="Activity_1qtr9ur" name="1"></userTask>
+    <endEvent id="Event_0wg04aj"></endEvent>
+    <sequenceFlow id="Flow_0yjf17q" sourceRef="Activity_0j03jym" targetRef="Event_0wg04aj"></sequenceFlow>
+    <userTask id="Activity_0j03jym" name="2"></userTask>
+  </process>
+  <bpmndi:BPMNDiagram id="BPMNDiagram_Process_1t03o4w">
+    <bpmndi:BPMNPlane bpmnElement="Process_1t03o4w" id="BPMNPlane_Process_1t03o4w">
+      <bpmndi:BPMNShape bpmnElement="StartEvent_09hx5ui" id="BPMNShape_StartEvent_09hx5ui">
+        <omgdc:Bounds height="36.0" width="36.0" x="152.0" y="102.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Gateway_0jnjamq" id="BPMNShape_Gateway_0jnjamq">
+        <omgdc:Bounds height="50.0" width="50.0" x="245.0" y="95.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Activity_1qtr9ur" id="BPMNShape_Activity_1qtr9ur">
+        <omgdc:Bounds height="80.0" width="100.0" x="360.0" y="80.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Event_0wg04aj" id="BPMNShape_Event_0wg04aj">
+        <omgdc:Bounds height="36.0" width="36.0" x="702.0" y="102.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNShape bpmnElement="Activity_0j03jym" id="BPMNShape_Activity_0j03jym">
+        <omgdc:Bounds height="80.0" width="100.0" x="530.0" y="80.0"></omgdc:Bounds>
+      </bpmndi:BPMNShape>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0yjf17q" id="BPMNEdge_Flow_0yjf17q">
+        <omgdi:waypoint x="630.0" y="120.0"></omgdi:waypoint>
+        <omgdi:waypoint x="702.0" y="120.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_129jq20" id="BPMNEdge_Flow_129jq20">
+        <omgdi:waypoint x="460.0" y="120.0"></omgdi:waypoint>
+        <omgdi:waypoint x="530.0" y="120.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_0thkae6" id="BPMNEdge_Flow_0thkae6">
+        <omgdi:waypoint x="295.0" y="120.0"></omgdi:waypoint>
+        <omgdi:waypoint x="360.0" y="120.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+      <bpmndi:BPMNEdge bpmnElement="Flow_080ax4j" id="BPMNEdge_Flow_080ax4j">
+        <omgdi:waypoint x="188.0" y="120.0"></omgdi:waypoint>
+        <omgdi:waypoint x="245.0" y="120.0"></omgdi:waypoint>
+      </bpmndi:BPMNEdge>
+    </bpmndi:BPMNPlane>
+  </bpmndi:BPMNDiagram>
+</definitions>
+        `;
+    }
+
     private loadXML(filename: string): Promise<string> {
         this.filename = filename;
         localStorage.setItem(cacheXmlFilenameKey, filename);
         return this.http.get(`/assets/${filename}.bpmn`, { responseType: 'text' }).toPromise();
     }
-
 
     private testEvent(): void {
         const events = [
@@ -640,5 +700,30 @@ export class BpmnjsComponent implements OnInit {
             });
         });
     }
+
+    private getCreate() {
+        return this.modeler.get("create");
+    }
+
+    private getElementFactory() {
+        return this.modeler.get("elementFactory");
+    }
+
+    private getElementRegistry() {
+        return this.modeler.get("elementRegistry");
+    }
+
+    private getModeling() {
+        return this.modeler.get("modeling");
+    }
+
+    private getModdle(): Moddle.Moddle {
+        return this.modeler.get("moddle");
+    }
+
+    private getPropertiesPanel() {
+        return this.modeler.get("propertiesPanel");
+    }
+
 
 }
