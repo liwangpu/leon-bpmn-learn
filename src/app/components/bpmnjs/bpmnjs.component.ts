@@ -21,6 +21,22 @@ var customTranslateModule = {
     translate: ['value', customTranslate]
 };
 
+class CustomContextPadProvider {
+    constructor(contextPad) {
+        contextPad.registerProvider(this);
+    }
+
+    getContextPadEntries(element) {
+        return function (entries) {
+            delete entries["delete"];
+            console.log('entries:',entries);
+            console.log('element:',element);
+            return entries;
+        };
+    }
+}
+
+
 @Component({
     selector: 'app-bpmnjs',
     templateUrl: './bpmnjs.component.html',
@@ -64,7 +80,11 @@ export class BpmnjsComponent implements OnInit {
             },
             // 插件
             additionalModules: [
-                customTranslateModule
+                customTranslateModule,
+                {
+                    __init__: ["customContextPadProvider"],
+                    customContextPadProvider: ["type", CustomContextPadProvider]
+                }
             ]
         });
 
@@ -75,11 +95,11 @@ export class BpmnjsComponent implements OnInit {
         this.modeler.on('element.click', (e: any) => {
             const shape: any = this.getElementRegistry().get(e.element.id);
             // console.log('type:', shape?.type);
-            console.log('shape:', shape);
+            // console.log('shape:', shape);
             // if (this.filename === this.traceUpStreamBpmnDoc) {
             // const upstream = traceUpStreamElement(shape.businessObject, ['bpmn:SequenceFlow', 'bpmn:Gateway', 'bpmn:Event'], true);
-            const upstream = traceUpStreamElement(shape.businessObject, [], true);
-            console.log('上游节点:', upstream);
+            // const upstream = traceUpStreamElement(shape.businessObject, [], true);
+            // console.log('上游节点:', upstream);
             // }
         });
 
