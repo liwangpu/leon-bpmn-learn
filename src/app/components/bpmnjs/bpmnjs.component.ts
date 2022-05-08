@@ -22,19 +22,28 @@ var customTranslateModule = {
 };
 
 class CustomContextPadProvider {
-    constructor(contextPad) {
+    constructor(config, contextPad, create, elementFactory, injector, translate) {
         contextPad.registerProvider(this);
     }
 
     getContextPadEntries(element) {
         return function (entries) {
             delete entries["delete"];
-            console.log('entries:',entries);
-            console.log('element:',element);
+            console.log('entries:', entries);
+            console.log('element:', element);
             return entries;
         };
     }
 }
+
+(CustomContextPadProvider as any).$inject = [
+    'config',
+    'contextPad',
+    'create',
+    'elementFactory',
+    'injector',
+    'translate'
+];
 
 
 @Component({
@@ -85,6 +94,7 @@ export class BpmnjsComponent implements OnInit {
                     __init__: ["customContextPadProvider"],
                     customContextPadProvider: ["type", CustomContextPadProvider]
                 }
+                // CustomContextPadProvider
             ]
         });
 
@@ -95,7 +105,27 @@ export class BpmnjsComponent implements OnInit {
         this.modeler.on('element.click', (e: any) => {
             const shape: any = this.getElementRegistry().get(e.element.id);
             // console.log('type:', shape?.type);
-            // console.log('shape:', shape);
+            console.log('shape:', shape);
+            console.log('businessObject:', shape.businessObject);
+            // if (this.filename === this.traceUpStreamBpmnDoc) {
+            // const upstream = traceUpStreamElement(shape.businessObject, ['bpmn:SequenceFlow', 'bpmn:Gateway', 'bpmn:Event'], true);
+            // const upstream = traceUpStreamElement(shape.businessObject, [], true);
+            // console.log('上游节点:', upstream);
+            // }
+        });
+
+        this.modeler.on('shape.added', (e: any) => {
+            const shape: any = this.getElementRegistry().get(e.element.id);
+            // console.log('type:', shape?.type);
+            const moddle = this.getModdle();
+            console.log('shape:', shape);
+            console.log('businessObject:', shape.businessObject);
+            let extensionElements = shape?.businessObject?.extensionElements;
+            if (!extensionElements) {
+                extensionElements = moddle.create('bpmn:ExtensionElements');
+            }
+            shape.businessObject.extensionElements = extensionElements;
+            this.getModeling().updateProperties(shape, { extensionElements });
             // if (this.filename === this.traceUpStreamBpmnDoc) {
             // const upstream = traceUpStreamElement(shape.businessObject, ['bpmn:SequenceFlow', 'bpmn:Gateway', 'bpmn:Event'], true);
             // const upstream = traceUpStreamElement(shape.businessObject, [], true);
